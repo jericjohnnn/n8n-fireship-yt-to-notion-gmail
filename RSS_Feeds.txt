@@ -1,0 +1,2 @@
+mine -> https://www.youtube.com/feeds/videos.xml?channel_id=UCGgGMiL03imA9LuRkYqUcMw
+fireship -> https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA

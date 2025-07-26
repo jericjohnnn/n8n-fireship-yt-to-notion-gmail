@@ -1,0 +1,276 @@
+{
+  "name": "Fireship Updates to My Gmail Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 1,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "63dda262-b3a9-4677-8a4c-d8c926d35621",
+      "name": "RSS Feed Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=get all transcript summarize it and put in the summary key.\n\nas for alignment_reason, based on the summary, tell as to why and if ever the video is aligned to me as a software engineer whose goal is to become a senior software engineer that likes building web apps or apps. just make it short and impactful.\n\nas for current_career_alignment and career_goal_alignment keys, a minimum of 1 and a max of 5 as the values, where for current career alignment, if the video is more about automation and systems then it should be high rated otherwise, you decide. for career goal alignment, to make it rated high, the video should be more about software development than automation. both should be strict whole numbers and are strings.\n\nas for tags, you can generate tags based on what the video is about and that its an array of tags.\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        272,
+        0
+      ],
+      "id": "87e3dc5f-ce0a-4742-bcf3-639fc6748625",
+      "name": "AI Agent",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        192,
+        176
+      ],
+      "id": "08614f00-9039-40dd-81e8-e8a95e11e635",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GCp7uIMi4I8KxRri",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"summary\": \"summary text\",\n  \"alignment_reason\": \"alignment\",\n  \"current_career_alignment\": \"5\",\n  \"career_goal_alignment\": \"5\",\n  \"tags\": [\"tag1\", \"tag2\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        192
+      ],
+      "id": "d3abdae4-7752-4705-96d5-654e7f587872",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Makes an HTTP request and returns the response data and transform the transcript array to one text",
+        "method": "POST",
+        "url": "https://www.youtube-transcript.io/api/transcripts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Basic 687b9c8553bf3b68e6fa8f67"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n   \"ids\": [\"{{ $json.id.replace('yt:video:', '') }}\"]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        208
+      ],
+      "id": "4bb69ab5-a261-47f2-bfee-cbdf87652d11",
+      "name": "Post Request to YT Transcript API"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "227800fd-20be-809e-86ce-f329595d7102",
+          "mode": "list",
+          "cachedResultName": "Fireship Updates",
+          "cachedResultUrl": "https://www.notion.so/227800fd20be809e86cef329595d7102"
+        },
+        "title": "={{ $('RSS Feed Trigger').item.json.title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Summary|rich_text",
+              "textContent": "={{ $json.output.summary }}"
+            },
+            {
+              "key": "Current Career Alignment|select",
+              "selectValue": "={{ $json.output.current_career_alignment }}"
+            },
+            {
+              "key": "Career Goal Alignment|select",
+              "selectValue": "={{ $json.output.career_goal_alignment }}"
+            },
+            {
+              "key": "Tags|multi_select",
+              "multiSelectValue": "={{ $json.output.tags }}"
+            },
+            {
+              "key": "Link|url",
+              "urlValue": "={{ $('RSS Feed Trigger').item.json.link }}"
+            },
+            {
+              "key": "Alignment Reason|rich_text",
+              "textContent": "={{ $json.output.alignment_reason }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "8f3a9ce3-d9b7-45a1-8c52-b9ae103f6c55",
+      "name": "Create a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "FEtK5r1qMa3pbhJc",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "jericjohnaligato@gmail.com",
+        "subject": "Fireship new update",
+        "message": "=<div style=\"font-family: Arial, sans-serif; background-color: #ffffff; padding: 20px; color: #333333; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px;\">\n  \n  <h2 style=\"color: #e63946; margin-top: 0;\">🚀 New Fireship Video Just Dropped!</h2>\n  <h3 style=\"margin: 0 0 10px 0;\">{{ $('RSS Feed Trigger').item.json.title }}</h3>\n\n  <p style=\"margin: 0 0 10px 0;\"><strong>📅 Uploaded:</strong>{{ new Date($('RSS Feed Trigger').item.json.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) }}</p>\n\n  <p style=\"margin: 0 0 10px 0;\"><strong>📝 Summary:</strong><br>\n    {{ $('AI Agent').item.json.output.summary }}</p>\n\n  <p style=\"margin: 0 0 10px 0;\"><strong>🏷️ Tags:</strong><br>\n  {{ $('AI Agent').item.json.output.tags }}</p>\n\n\n  <p style=\"margin: 0 0 10px 0;\"><strong>💡 Why It’s Relevant to You:</strong><br>\n  <em>\"{{ $('AI Agent').item.json.output.alignment_reason }}\"</em></p>\n\n  <p style=\"margin: 0 0 20px 0;\"><strong>🔗 Watch it here:</strong><br>\n  <a href=\"{{ $('RSS Feed Trigger').item.json.link }}\" style=\"color: #1d3557;\">{{ $('RSS Feed Trigger').item.json.link }}</a></p>\n\n  <hr style=\"border: none; border-top: 1px solid #ccc; margin: 20px 0;\">\n\n  <p style=\"font-size: 12px; color: #888888; margin: 0;\">\n    This email was auto-generated by your Fireship-to-Notion integration workflow.<br>\n    Keep building cool stuff. 💻⚡\n  </p>\n</div>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        0
+      ],
+      "id": "fb486712-f7f1-412c-9458-a0806c5abbfc",
+      "name": "Send a message",
+      "webhookId": "bc38421e-2821-42e5-811b-7c72f9b217e5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GLwHiY8SeRTvr1yE",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "RSS Feed Trigger": [
+      {
+        "json": {
+          "title": "AWS just released its Cursor killer…",
+          "link": "https://www.youtube.com/watch?v=gA6r7iVzP6M",
+          "pubDate": "2025-07-16T15:16:58.000Z",
+          "author": "Fireship",
+          "id": "yt:video:gA6r7iVzP6M",
+          "isoDate": "2025-07-16T15:16:58.000Z"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "RSS Feed Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Request to YT Transcript API": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a database page": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "48dc5e64-54c0-4b26-9ceb-bcd63afdd4af",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "06b54c591077c80c57ff047b053e0e6b3788264f517d2c577bc79cc190392894"
+  },
+  "id": "Z3q0NFHfEj7gnYnz",
+  "tags": []
+}
