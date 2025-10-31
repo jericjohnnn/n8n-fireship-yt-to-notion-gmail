@@ -82,7 +82,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Basic 687b9c8553bf3b68e6fa8f67"
+              "value": "Basic <token>"
             }
           ]
         },
